@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1528836996620.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "35852B8C",
+    "lastKnownWriteTime" : 1528148274,
+    "last_content_update" : 1528148274,
+    "path" : "~/Documents/CoReAnalysis/R/miscFunctions.R",
+    "project_path" : "R/miscFunctions.R",
+    "properties" : {
+        "cursorPosition" : "60,0",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 7,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

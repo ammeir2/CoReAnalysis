@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1528925457439.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "39FD2DEA",
+    "lastKnownWriteTime" : 1528925561,
+    "last_content_update" : 1528925561040,
+    "path" : "~/Documents/CoReAnalysis/vignettes/coreAnalysis_vignette.Rmd",
+    "project_path" : "vignettes/coreAnalysis_vignette.Rmd",
+    "properties" : {
+        "cursorPosition" : "18,48",
+        "scrollLine" : "12",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 8,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

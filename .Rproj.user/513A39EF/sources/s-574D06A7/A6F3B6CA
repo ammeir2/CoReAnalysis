@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1528761584738.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "A6F3B6CA",
+    "lastKnownWriteTime" : 1528762123,
+    "last_content_update" : 1528762123651,
+    "path" : "~/Documents/CoReAnalysis/misc scripts/pearson experiments.R",
+    "project_path" : "misc scripts/pearson experiments.R",
+    "properties" : {
+        "cursorPosition" : "108,0",
+        "scrollLine" : "0"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

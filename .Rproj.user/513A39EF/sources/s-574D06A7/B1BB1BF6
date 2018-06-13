@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1528837114886.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "B1BB1BF6",
+    "lastKnownWriteTime" : 1528851397,
+    "last_content_update" : 1528851397469,
+    "path" : "~/Documents/CoReAnalysis/R/wrapper_function.R",
+    "project_path" : "R/wrapper_function.R",
+    "properties" : {
+        "cursorPosition" : "89,0",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
