@@ -122,7 +122,7 @@ replication_power <- function(object,
     naive_rep_ncp <- object$naive_mle
     conditional_rep_ncp <- object$conditional_mle
   }
-  else if(test_statistic %in% c("chisq", "f")) {
+  else if(test_statistic %in% c("chisq", "f", "F")) {
     df1 <- object$df1
     df2 <- object$df2
     threshold <- object$threshold

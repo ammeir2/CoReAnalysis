@@ -6,7 +6,7 @@
 \usage{
 CoReAnalysis(x, test_statistic = c("z", "t", "F", "chisq", "correlation"),
   pval_threshold = 0.05, threshold = NULL, df1 = NULL, df2 = NULL,
-  confidence_level = 0.95)
+  confidence_level = 0.95, normalize = FALSE)
 }
 \arguments{
 \item{x}{the observed test-statistic.}

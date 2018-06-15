@@ -30,7 +30,7 @@
 CoReAnalysis <- function(x, test_statistic = c("z", "t", "F", "chisq", "correlation"),
                          pval_threshold = 0.05, threshold = NULL,
                          df1 = NULL, df2 = NULL,
-                         confidence_level = 0.95) {
+                         confidence_level = 0.95, normalize = FALSE) {
   # Checking parameters ----
   check_coreAnalysis_arguments(x, test_statistic, pval_threshold, threshold,
                                df1, df2)
@@ -53,6 +53,7 @@ CoReAnalysis <- function(x, test_statistic = c("z", "t", "F", "chisq", "correlat
 
   # Computing MLE and CIs-----------
   if(test_statistic %in% c("z", "t")) {
+    naive_pvalue <- 2 * pt(-abs(x), df = df1)
     naive_mle <- t_conditional_ncp_mle(x = x, df = df1,
                                        threshold = 0)
     conditional_mle <- t_conditional_ncp_mle(x = x, df = df1,
@@ -62,6 +63,7 @@ CoReAnalysis <- function(x, test_statistic = c("z", "t", "F", "chisq", "correlat
     conditional_ci <- t_conditional_ncp_ci(x, df = df1, threshold = threshold,
                                            confidence_level = confidence_level)
   } else if(test_statistic == "chisq") {
+    naive_pvalue <- pchisq(x, df = df1, lower.tail = FALSE)
     naive_mle <- chisq_conditional_ncp_mle(x = x, df = df1,
                                        threshold = 0)
     conditional_mle <- t_conditional_ncp_mle(x = x, df = df1,
@@ -72,6 +74,7 @@ CoReAnalysis <- function(x, test_statistic = c("z", "t", "F", "chisq", "correlat
                                                threshold = threshold,
                                                confidence_level = confidence_level)
   } else if(test_statistic == "correlation") {
+    naive_pvalue <- 2 * pnorm(-abs(corr_to_z(x, df1)))
     naive_mle <- correlation_conditional_mle(corr = x, df = df1, threshold = 0)
     conditional_mle <- correlation_conditional_mle(corr = x, df = df1,
                                                    threshold = threshold)
@@ -81,6 +84,7 @@ CoReAnalysis <- function(x, test_statistic = c("z", "t", "F", "chisq", "correlat
                                                  threshold = threshold,
                                                  confidence_level = confidence_level)
   } else if(test_statistic %in% c("f", "F")) {
+    naive_pvalue <- pf(x, df1 = df1, df2 = df2, lower.tail = FALSE)
     naive_mle <- f_conditional_ncp_mle(x, df1 = df1, df2 = df2, threshold = 0)
     conditional_mle <- f_conditional_ncp_mle(x, df1 = df1, df2 = df2,
                                              threshold = threshold)
@@ -92,10 +96,19 @@ CoReAnalysis <- function(x, test_statistic = c("z", "t", "F", "chisq", "correlat
                                  confidence_level = confidence_level)
   }
 
+  # Normalizing effect size
+  if(normalize & test_statistic %in% c("F", "chisq")) {
+    naive_mle <- sqrt(naive_mle / df1)
+    conditional_mle <- sqrt(conditional_mle / df1)
+    naive_ci <- sqrt(naive_ci / df1)
+    conditional_ci <- sqrt(conditional_ci / df1)
+  }
+
   # Returning results -------
   result <- list()
   result$x <- x
   result$test_type <- test_statistic
+  result$naive_pvalue <- naive_pvalue
   result$threshold <- threshold
   result$pval_threshold <- pval_threshold
   result$df1 <- df1

@@ -3,3 +3,5 @@
 misc scripts/*
 vignettes/*
 data-raw/*
+vignettes/coreAnalysis_vignette_cache/*
+vignettes/rsconnect/*

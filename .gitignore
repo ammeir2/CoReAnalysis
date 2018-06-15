@@ -4,3 +4,5 @@
 .Ruserdata
 figures/*
 data-raw/*
+vignettes/coreAnalysis_vignette_cache/*
+vignettes/rsconnect/*

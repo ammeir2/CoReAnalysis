@@ -1,5 +1,5 @@
 ---
-title: "Conditional Replicability Analysis - A Vignette"
+title: "Conditional Replicability Analysis - A Vignette (VERY DRAFTY)"
 author: "Amit Meir"
 date: "6/13/2018"
 output: html_document
@@ -9,26 +9,200 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Motivating Example - The Open Science Dataset
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r dependencies}
+```{r dependencies, echo = TRUE, message=FALSE, warning=FALSE}
 # devtools::install.github("ammeir2/CoReAnalysis")
 library(magrittr)
 library(ggplot2)
 library(reshape2)
 library(dplyr)
+library(CoReAnalysis)
 ```
 
-## Including Plots
+## Motivating Example - The Open Science Dataset
 
-You can also embed plots, for example:
+In **A TIME** the Open Science Colloration has conducted a replication study of 100 influential studies in Psychology **CITATION**. Out of the **NUMBER** of replication studies that were completed, only **SMALL NUMBER** were sucessfully replicated. Next we will load the open science collaboration dataset and present some exploratory analysis.
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r open science summary tables, message=FALSE, warning=FALSE, cache = TRUE}
+# loading dataset
+data(osc_data)
+
+# the frequency of types of tests
+table(osc_data$test_statistic)
+
+# Computing naive pvalues
+original_statistics <- osc_data$T.Test.value.O
+df1 <- osc_data$T.df1.O
+isCorrelation <- osc_data$test_statistic == "correlation"
+isTtest <- osc_data$test_statistic == "t"
+df1[isCorrelation] <- osc_data$T.N.O[isCorrelation]
+df1[isTtest] <- osc_data$T.df2.O[isTtest]
+df2 <- osc_data$T.df2.O
+test_type <- osc_data$test_statistic
+naive_results <- mapply(CoReAnalysis, x = original_statistics, test_statistic = test_type, 
+                        threshold = 0, df1 = df1, df2 = df2, SIMPLIFY = FALSE)
+pvalues <- sapply(naive_results, function(x) x$naive_pvalue)
+#cbind(pvalues, osc_data$T.pval.recalc.O) %>% round(2)
+binned_pvals <- cut(pvalues, c(0, 0.005, 0.05, 0.1, 1), c("<0.005", "<0.05", "<0.1", "<1"))
+table(binned_pvals)
+
+# How many studies were replicated?
+rep_stats <- osc_data$T.Test.value.R
+rep_df1 <- osc_data$T.df1.R
+rep_df1[isCorrelation] <- osc_data$T.N.R[isCorrelation]
+rep_df1[isTtest] <- osc_data$T.df2.R[isTtest]
+rep_df1[48] <- Inf # very large sample size in replication study
+rep_df2 <- osc_data$T.df2.R
+rep_results <- mapply(CoReAnalysis, x = rep_stats, test_statistic = test_type, 
+                      threshold = 0, df1 = rep_df1, df2 = rep_df2, SIMPLIFY = FALSE)
+rep_pvalues <- sapply(rep_results, function(x) x$naive_pvalue)
+binned_rep_pvals <- cut(rep_pvalues, c(0, 0.005, 0.05, 0.1, 1), c("<0.005", "<0.05", "<0.1", "<1"))
+table(binned_rep_pvals)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+So, only $33$ replication studies had statistically significant results compared to the $88$ statistically significant results in the original studies. **CoReAnalysis** is a software package which can be used to conduct inference on the non-centrality parameters of test-statistics (NCP). The NCP of a test-statistic can be used to quantify the deviation of the observed results from the null, and is the basis for power calculations. In the scientific literature, it is often the case that only significant results are published and/or receive major attention. This creates a problem often referred to as *publication bias*, where published effect sizes are often overestimated compared to the true underlying signal due to this selective publishing. 
+
+**CoReAnalysis** addresses this publication bias by incorporating our knowledge regarding the publication process into the statistical inference procedure. For example, suppose that we conduct an scientific experiment and observe $y \sim N(\mu, \sigma^{2})$. We will be able to publish our findings only if we can produce evidence that $\mu \neq 0$. The common way to make such an argument is via hypothesis testing. We test $H_0:\mu = 0$ and reject the null hypothesis if $P_{\mu = 0}(|Y| > y) < 0.05$. In terms of $Y$, this translates to:
+$$
+z := \left|\frac{y}{\sigma}\right| > 1.96 
+$$
+The non-centrality parameter of the test-statistic $z$ is $\mu/\sigma$. Since this selection (publication) process precludes us from observing small values of $z$, the correct likelihood of $z$ is is a truncated one,
+$$
+f(z\mid |z| > c) = \frac{\varphi(z)}{P(|z| > c)}I\{|z| > c\}.
+$$
+**CoReAnalysis** corrects for selection by conducting inference under this *conditional likelihood* instead of the *naive* likelihood which ignores the selection process. For more information on conditional inference see **MANY CITATIONS**
+
+```{r open science figure, message=FALSE, warning=FALSE, cache = TRUE}
+# loading data
+data(osc_data)
+osc_data <- subset(osc_data, pvalues <= 0.05)
+
+# Conducting replicability inference
+original_statistics <- osc_data$T.Test.value.O
+df1 <- osc_data$T.df1.O
+isCorrelation <- osc_data$test_statistic == "correlation"
+isTtest <- osc_data$test_statistic == "t"
+df1[isCorrelation] <- osc_data$T.N.O[isCorrelation]
+df1[isTtest] <- osc_data$T.df2.O[isTtest]
+df2 <- osc_data$T.df2.O
+test_type <- osc_data$test_statistic
+results <- mapply(CoReAnalysis, x = original_statistics, test_statistic = test_type, 
+                  pval_threshold = 0.05, df1 = df1, df2 = df2, normalize = TRUE, 
+                  SIMPLIFY = FALSE)
+# obs <- 27
+# CoReAnalysis(original_statistics[obs], test_statistic = test_type[obs],
+#              pval_threshold = 0.05, df1 = df1[obs], df2 = df2[obs],
+#              normalize = FALSE)
+
+# Replication study was not subject to truncation
+rep_stats <- osc_data$T.Test.value.R
+rep_df1 <- osc_data$T.df1.R
+rep_df1[isCorrelation] <- osc_data$T.N.R[isCorrelation]
+rep_df1[isTtest] <- osc_data$T.df2.R[isTtest]
+rep_df1[is.na(rep_df1)] <- Inf
+rep_df2 <- osc_data$T.df2.R
+rep_results <- mapply(CoReAnalysis, x = rep_stats, test_statistic = test_type, 
+                      threshold = 0, df1 = rep_df1, df2 = rep_df2, normalize = TRUE,
+                      SIMPLIFY = FALSE)
+
+# Getting results
+naive_ci <- sapply(results, function(x) x$naive_ci)
+conditional_ci <- sapply(results, function(x) x$conditional_ci)
+naive_estimate <- sapply(results, function(x) x$naive_mle)
+conditional_estimate <- sapply(results, function(x) x$conditional_mle)
+rep_estimate <- sapply(rep_results, function(x) x$naive_mle)
+rep_ci <- sapply(rep_results, function(x) x$naive_ci)
+
+# Rescaling replication results
+isFchisq <- test_type %in% c("F", "chisq")
+isTnorm<- osc_data$test_statistic %in% c("t", "z")
+samp_size_ratio <- osc_data$T.N.O / osc_data$T.N.R
+rep_estimate[isTnorm] <- rep_estimate[isTnorm] * sqrt(samp_size_ratio[isTnorm])
+rep_estimate[isFchisq] <- rep_estimate[isFchisq] * samp_size_ratio[isFchisq]
+rep_ci[1, isTnorm] <- rep_ci[1, isTnorm] * sqrt(samp_size_ratio[isTnorm])
+rep_ci[2, isTnorm] <- rep_ci[2, isTnorm] * sqrt(samp_size_ratio[isTnorm])
+rep_ci[1, isFchisq] <- rep_ci[1, isFchisq] * samp_size_ratio[isFchisq]
+rep_ci[2, isFchisq] <- rep_ci[2, isFchisq] * samp_size_ratio[isFchisq]
+
+# Arranging in a data.frame
+naive_data <- data.frame(study_num = 1:nrow(osc_data),
+                         estimate = naive_estimate, 
+                         lci = naive_ci[1, ], uci = naive_ci[2, ],
+                         type = "naive",
+                         statistic = test_type, offset = 0)
+cond_data <- data.frame(study_num = 1:nrow(osc_data),
+                        estimate = conditional_estimate, 
+                        lci = conditional_ci[1, ], uci = conditional_ci[2, ],
+                        type = "conditional",
+                        statistic = test_type, offset = .15)
+rep_data <- data.frame(study_num = 1:nrow(osc_data), 
+                       estimate = rep_estimate, 
+                       lci = rep_ci[1, ], uci = rep_ci[2, ],
+                       type = "replication",
+                       statistic = test_type, offset = .3)
+plot_data <- rbind(naive_data, cond_data, rep_data)
+
+# subset(plot_data, !(statistic %in% c("F", "chisq")))
+ggplot(plot_data, aes(x = study_num + offset, col = type, linetype = type)) + 
+  geom_segment(aes(xend = study_num + offset, y = lci, yend = uci)) + 
+  geom_point(aes(y = estimate, shape = statistic)) + 
+  # facet_wrap(~ statistic, scales = "free", ncol = 1) +
+  theme_bw() + 
+  geom_hline(yintercept = 0)
+
+# Computing coverage rate of confidence intervals
+naive_cover <- numeric(nrow(osc_data))
+conditional_cover <- numeric(nrow(osc_data))
+for(i in 1:nrow(osc_data)) {
+  naive_cover[i] <- naive_ci[1, i] < rep_estimate[i] & naive_ci[2, i] > rep_estimate[i]
+  conditional_cover[i] <- conditional_ci[1, i] < rep_estimate[i] & conditional_ci[2, i] > rep_estimate[i]
+}
+mean(naive_cover)
+mean(conditional_cover)
+
+# Power calculations
+power_analysis <- mapply(replication_power, results, 1 / samp_size_ratio, SIMPLIFY = FALSE)
+naive_power <- sapply(power_analysis, function(x) x$naive_power)
+conditional_power <- sapply(power_analysis, function(x) x$conditional_power)
+naive_power_ci <- sapply(power_analysis, function(x) x$naive_power_ci)
+conditional_power_ci <- sapply(power_analysis, function(x) x$conditional_power_ci)
+
+replicated <- osc_data$T.pval.recalc.R < 0.05
+mean(replicated, na.rm = TRUE)
+mean(naive_power)
+rowMeans(naive_power_ci)
+mean(conditional_power)
+rowMeans(conditional_power_ci)
+wilcox.test(naive_power[replicated], naive_power[!replicated], 
+            alternative = "greater")
+wilcox.test(conditional_power[replicated], conditional_power[!replicated], 
+            alternative = "greater")
+
+# Plotting power calculations 
+naive_data <- data.frame(power = naive_power, 
+                         lci = naive_power_ci[1, ], uci = naive_power_ci[2, ],
+                         type = "naive",
+                         replicated = replicated,
+                         statistic = test_type, offset = 0)
+naive_data <- subset(naive_data, !is.na(replicated))
+naive_data$study_num[naive_data$replicated] <- 1:sum(naive_data$replicated)
+naive_data$study_num[!naive_data$replicated] <- 1:sum(!naive_data$replicated)
+cond_data <- data.frame(power = conditional_power, 
+                        lci = conditional_power_ci[1, ], uci = conditional_power_ci[2, ],
+                        type = "conditional",
+                        replicated = replicated,
+                        statistic = test_type, offset = 0.35)
+cond_data <- subset(cond_data, !is.na(replicated))
+cond_data$study_num <- naive_data$study_num
+plot_data <- rbind(naive_data, cond_data)
+ggplot(subset(plot_data, !is.na(replicated)), aes(x = study_num + offset, col = type, linetype = type, shape = statistic)) +
+  geom_point(aes(y = power)) + 
+  geom_segment(aes(y = lci, yend = uci, xend = study_num + offset)) + 
+  theme_bw() + 
+  facet_wrap(~ replicated, labeller = "label_both", ncol = 1, scales = "free")
+```
+
+
+
+
+
+

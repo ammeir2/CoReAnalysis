@@ -34,7 +34,7 @@ f_conditional_ncp_mle <- function(x, df1 = 1, df2 = Inf,
   mle <- optimize(f = f_conditional_density,
                   df1 = df1, df2 = df2,
                   x = x, threshold = threshold,
-                  interval = c(0, x), maximum = TRUE)$maximum
+                  interval = c(0, x * df1), maximum = TRUE)$maximum
 
   return(mle)
 }
@@ -51,7 +51,7 @@ f_conditional_ncp_mle <- function(x, df1 = 1, df2 = Inf,
 f_conditional_density <- function(ncp, x, df1, df2, threshold) {
   dens <- df(x, df1, df2, ncp, TRUE)
   prob <- -pf(threshold, df1, df2, ncp, FALSE, TRUE)
-  # print(c(threshold, ncp, dens, prob, dens + prob))
+  # print(round(c(x, threshold, ncp, dens + prob), 3))
   return(dens + prob)
 }
 
