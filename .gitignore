@@ -3,6 +3,6 @@
 .RData
 .Ruserdata
 figures/*
-data-raw/*
+data-raw/rpp_data.csv
 vignettes/coreAnalysis_vignette_cache/*
 vignettes/rsconnect/*
